@@ -1,0 +1,96 @@
+1.huffman_encoding.py: 
+
+
+FUNCTION max_heap(array):
+    SET l = LENGTH(array)
+
+    FUNCTION repair_up(index):
+        SET holder = array[index]
+        WHILE index > 0 AND array[PARENT(index)][0] < holder[0]:
+            array[index] = array[PARENT(index)]
+            index = PARENT(index)
+        array[index] = holder
+
+    FUNCTION repair_down(index):
+        SET holder = array[index]
+        WHILE LEFT_CHILD(index) < l:
+            SET child = LEFT_CHILD(index)
+            IF RIGHT_CHILD(index) < l AND array[child][0] < array[RIGHT_CHILD(index)][0]:
+                SET child = RIGHT_CHILD(index)
+            IF holder[0] >= array[child][0]:
+                BREAK
+            array[index] = array[child]
+            index = child
+        array[index] = holder
+
+    FOR i FROM (l - 2) // 2 DOWNTO 0:
+        CALL repair_down(i)
+
+    FOR i FROM 1 TO l - 1:
+        CALL repair_up(i)
+
+    RETURN array
+FUNCTION huffman(Text):
+    SET char_count = count(Text)
+
+    SET heap = EMPTY LIST
+    FOR char, freq IN char_count.items():
+        APPEND (freq, char) TO heap 
+
+    SET heap = max_heap(heap)
+
+    WHILE LENGTH(heap) > 1:
+        SET left = heap.pop()
+        SET right = heap.pop()
+        SET merged = (left[0] + right[0], left, right)
+        APPEND merged TO heap 
+        SET heap = max_heap(heap)
+
+    SET root = heap[0]
+
+    SET codes = EMPTY DICTIONARY
+
+    FUNCTION generate_codes(node, current_code=""):
+        IF LENGTH(node) == 2:
+            SET char = node[1]
+            codes[char] = current_code
+            RETURN
+        CALL generate_codes(node[1], current_code + "0")
+        CALL generate_codes(node[2], current_code + "1")
+
+    CALL generate_codes(root)
+
+    RETURN (codes, root)
+
+FUNCTION count(X):
+    SET num_of_char = EMPTY DICTIONARY
+    FOR char IN X:
+        IF char NOT IN num_of_char:
+            num_of_char[char] = 1
+        ELSE:
+            num_of_char[char] += 1
+    RETURN num_of_char
+******************************************************************************************
+2.huffman_decoding.py: 
+
+FUNCTION decode_huffman(encoded_text, huffman_tree):
+    SET current_node = huffman_tree
+    SET decoded_text = EMPTY STRING
+
+    FOR bit IN encoded_text:
+        IF bit == '0':
+            current_node = current_node[1]
+        ELSE:
+            current_node = current_node[2]
+
+        IF LENGTH(current_node) == 2:
+            decoded_text += current_node[1]
+            current_node = huffman_tree
+
+    RETURN decoded_text
+
+FUNCTION encode_text(text, huffman_codes):
+    SET encoded_text = EMPTY STRING
+    FOR char IN text:
+        encoded_text += huffman_codes[char]
+    RETURN encoded_text
